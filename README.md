@@ -1,2 +1,4 @@
 # nanobanana-demo
-Integración de nano banana, html, CND, API
+
+Integración de nano banana
+Firebase functions, versel

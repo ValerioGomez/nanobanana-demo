@@ -3,16 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TechSolutions - Asistencia Inteligente</title>
+    <title>SamsamTec</title>
 
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Nano Banana CSS -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/nano-bananax@latest/dist/style.css"
-    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
 
     <!-- Google Fonts -->
     <link
@@ -35,6 +29,37 @@
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
           0 10px 10px -5px rgba(0, 0, 0, 0.04);
       }
+
+      /* Estilos para el botón de carga */
+      #loadingBtn {
+        position: relative;
+        overflow: hidden;
+      }
+
+      #loadingBtn:after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        animation: loading 1.5s infinite;
+      }
+
+      @keyframes loading {
+        0% {
+          left: -100%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
     </style>
   </head>
   <body class="bg-gray-50">
@@ -43,7 +68,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex items-center">
-            <span class="text-xl font-bold text-indigo-600">TechSolutions</span>
+            <span class="text-xl font-bold text-indigo-600">SamsamTec</span>
           </div>
           <div class="flex items-center space-x-4">
             <a
@@ -77,7 +102,7 @@
             Transformamos tu experiencia digital con asistencia inteligente 24/7
           </p>
           <button
-            onclick="window.toggleChatbot()"
+            id="mainChatBtn"
             class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition duration-200 shadow-lg"
           >
             💬 Chatear con nuestro asistente
@@ -158,7 +183,7 @@
           Nuestro asistente virtual está listo para ayudarte en este momento
         </p>
         <button
-          onclick="window.toggleChatbot()"
+          id="secondChatBtn"
           class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200"
         >
           🚀 Iniciar conversación
@@ -174,18 +199,134 @@
       </div>
     </footer>
 
-    <!-- Nano Banana JS -->
-    <script src="https://cdn.jsdelivr.net/npm/nano-bananax@latest/dist/index.js"></script>
+    <!-- Nano Banana CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/nano-bananax@latest/dist/style.css"
+    />
+
+    <!-- Nano Banana JS con carga controlada -->
     <script>
-      window.initChatbot({
-        serverEndpoint: "/api/chat", // 👈 CAMBIA ESTA LÍNEA
-        title: "Asistente Virtual TechSolutions",
-        placeholder: "¿Cómo podemos ayudarte hoy?",
-        primaryColor: "#4f46e5",
-        textColor: "#ffffff",
-        initialMessages: [
-          "¡Hola! 👋 Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?",
-        ],
+      // Estado global del chatbot
+      window.chatbotState = {
+        loaded: false,
+        initialized: false,
+      };
+
+      // Función para cargar Nano Banana
+      function loadNanoBanana() {
+        return new Promise((resolve, reject) => {
+          if (window.chatbotState.loaded) {
+            resolve();
+            return;
+          }
+
+          const script = document.createElement("script");
+          script.src =
+            "https://cdn.jsdelivr.net/npm/nano-bananax@latest/dist/index.js";
+          script.onload = () => {
+            window.chatbotState.loaded = true;
+            resolve();
+          };
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+
+      // Función para inicializar el chatbot
+      function initChatbot() {
+        if (window.chatbotState.initialized) return;
+
+        if (typeof window.initChatbot === "function") {
+          window.initChatbot({
+            serverEndpoint: "/api/chat",
+            title: "Asistente Virtual TechSolutions",
+            placeholder: "¿Cómo podemos ayudarte hoy?",
+            primaryColor: "#4f46e5",
+            textColor: "#ffffff",
+            initialMessages: [
+              "¡Hola! 👋 Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?",
+            ],
+          });
+          window.chatbotState.initialized = true;
+          console.log("Chatbot inicializado correctamente");
+
+          // Actualizar botones
+          document
+            .querySelectorAll("#mainChatBtn, #secondChatBtn")
+            .forEach((btn) => {
+              btn.classList.remove("opacity-75");
+              btn.removeAttribute("id");
+              if (btn.id === "loadingBtn") {
+                btn.id = "";
+                btn.removeAttribute("id");
+              }
+            });
+        }
+      }
+
+      // Función para abrir el chatbot
+      function openChatbot() {
+        if (
+          window.chatbotState.initialized &&
+          typeof window.toggleChatbot === "function"
+        ) {
+          window.toggleChatbot();
+        } else {
+          // Mostrar estado de carga en los botones
+          document
+            .querySelectorAll("#mainChatBtn, #secondChatBtn")
+            .forEach((btn) => {
+              btn.classList.add("opacity-75");
+              btn.id = "loadingBtn";
+            });
+
+          // Cargar e inicializar el chatbot
+          loadNanoBanana()
+            .then(() => {
+              initChatbot();
+              // Pequeño retraso para asegurar que esté listo
+              setTimeout(() => {
+                if (typeof window.toggleChatbot === "function") {
+                  window.toggleChatbot();
+                }
+              }, 300);
+            })
+            .catch((error) => {
+              console.error("Error cargando Nano Banana:", error);
+              alert("Error al cargar el chat. Por favor, recarga la página.");
+
+              // Restaurar botones
+              document
+                .querySelectorAll("#mainChatBtn, #secondChatBtn")
+                .forEach((btn) => {
+                  btn.classList.remove("opacity-75");
+                  btn.id = btn.id === "loadingBtn" ? "" : btn.id;
+                });
+            });
+        }
+      }
+
+      // Asignar event listeners cuando el DOM esté listo
+      document.addEventListener("DOMContentLoaded", function () {
+        // Precargar Nano Banana en segundo plano
+        setTimeout(() => {
+          loadNanoBanana()
+            .then(() => {
+              initChatbot();
+            })
+            .catch((error) => {
+              console.error("Error precargando Nano Banana:", error);
+            });
+        }, 1000);
+
+        // Asignar event listeners a los botones
+        document
+          .getElementById("mainChatBtn")
+          .addEventListener("click", openChatbot);
+        document
+          .getElementById("secondChatBtn")
+          .addEventListener("click", openChatbot);
       });
     </script>
   </body>
